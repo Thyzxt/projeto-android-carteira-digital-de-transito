@@ -12,6 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
         <activity android:name=".CondutorActivity" />
+        <activity android:name=".InfratorActivity" />
 
         <activity
             android:name=".MainActivity2"

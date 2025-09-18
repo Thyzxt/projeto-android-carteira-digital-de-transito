@@ -1,9 +1,12 @@
 package com.example.myapplication
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,13 +34,16 @@ class CondutorActivity : ComponentActivity() {
 
 @Composable
 fun TelaCondutor() {
+
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF2F2F2))
     ) {
 
-        TopoCondutor()
+        TopoCondutor(context = context)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -90,7 +97,7 @@ fun TelaCondutor() {
 
 
 @Composable
-fun TopoCondutor() {
+fun TopoCondutor(context: Context) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -100,7 +107,16 @@ fun TopoCondutor() {
         contentAlignment = Alignment.CenterStart
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+            Icon(
+                Icons.Default.ArrowBack,
+                contentDescription = "Voltar",
+                tint = Color.White,
+                modifier = Modifier.clickable {
+
+                    val intent = Intent(context, MainActivity::class.java)
+                    context.startActivity(intent)
+                }
+            )
             Spacer(modifier = Modifier.width(8.dp))
             Text("CONDUTOR", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }

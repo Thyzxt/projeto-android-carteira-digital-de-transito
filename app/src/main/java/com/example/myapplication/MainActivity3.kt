@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,13 +36,15 @@ class InfratorActivity : ComponentActivity() {
 @Composable
 fun TelaInfrator(){
 
+    val context = LocalContext.current
+
     Column(
 
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF2F2F2))){
 
-        TopoInfrator()
+        TopoInfrator(context = context)
 
         Card(
             modifier = Modifier
@@ -188,7 +191,7 @@ fun TelaInfrator(){
 }
 
 @Composable
-fun TopoInfrator() {
+fun TopoInfrator(context: Context) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -198,9 +201,18 @@ fun TopoInfrator() {
         contentAlignment = Alignment.CenterStart
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+            Icon(
+                Icons.Default.ArrowBack,
+                contentDescription = "Voltar",
+                tint = Color.White,
+                modifier = Modifier.clickable {
+
+                    val intent = Intent(context, MainActivity::class.java)
+                    context.startActivity(intent)
+                }
+            )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("INFRAÇÕES", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("INFRAÇÕES", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }

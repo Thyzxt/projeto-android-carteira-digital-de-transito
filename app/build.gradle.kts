@@ -57,3 +57,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
+
+dependencies {
+    val nav_version = "2.9.4"
+
+    implementation(libs.androidx.navigation.compose)
+}

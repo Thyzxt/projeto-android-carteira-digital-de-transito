@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Spacer
 import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 
@@ -50,19 +51,34 @@ fun TelaPrincipal() {
             titulo = "CONDUTOR",
             descricao = "Gerencie sua habilitação",
             cor = Color(0xFF2ECC71),
-            icone = Icons.Default.Person
+            icone = Icons.Default.Person,
+            onClick = {
+
+                val intent = Intent(context, CondutorActivity::class.java)
+                context.startActivity(intent)
+            }
         )
         CardOpcao(
             titulo = "VEÍCULOS",
             descricao = "Acesso ao CRLV-e, venda digital",
             cor = Color(0xFFF1C40F),
-            icone = Icons.Default.Star
+            icone = Icons.Default.Star,
+            onClick = {
+
+                val intent = Intent(context, CondutorActivity::class.java)
+                context.startActivity(intent)
+            }
         )
         CardOpcao(
             titulo = "INFRAÇÕES",
             descricao = "Visualize e pague infrações\ncom até 40% de desconto",
             cor = Color(0xFF1E3799),
-            icone = Icons.Default.Clear
+            icone = Icons.Default.Clear,
+            onClick = {
+
+                val intent = Intent(context, InfratorActivity::class.java)
+                context.startActivity(intent)
+            }
         )
         CardOpcao(
             titulo = "EDUCAÇÃO",
@@ -70,22 +86,6 @@ fun TelaPrincipal() {
             cor = Color(0xFF3498DB),
             icone = Icons.Default.AccountBox
         )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            Button(onClick = {
-                val intent = Intent(
-                    context,
-                    CondutorActivity::class.java
-                )
-                context.startActivity(intent)
-            })
-
-            { Text("Mudar de tela") }
-        }
     }
 }
 
@@ -138,12 +138,14 @@ fun CardOpcao(
     titulo: String,
     descricao: String,
     cor: Color,
-    icone: ImageVector
+    icone: ImageVector,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable(onClick = onClick ?: {}),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = cor),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
