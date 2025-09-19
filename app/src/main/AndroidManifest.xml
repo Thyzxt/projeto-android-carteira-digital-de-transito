@@ -13,6 +13,7 @@
         android:theme="@style/Theme.MyApplication">
         <activity android:name=".CondutorActivity" />
         <activity android:name=".InfratorActivity" />
+        <activity android:name=".VeiculosActivity" />
 
         <activity
             android:name=".MainActivity2"

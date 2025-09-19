@@ -65,7 +65,7 @@ fun TelaPrincipal() {
             icone = Icons.Default.Star,
             onClick = {
 
-                val intent = Intent(context, CondutorActivity::class.java)
+                val intent = Intent(context, VeiculosActivity::class.java)
                 context.startActivity(intent)
             }
         )

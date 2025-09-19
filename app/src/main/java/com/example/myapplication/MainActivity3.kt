@@ -205,7 +205,7 @@ fun TopoInfrator(context: Context) {
                 Icons.Default.ArrowBack,
                 contentDescription = "Voltar",
                 tint = Color.White,
-                modifier = Modifier.clickable {
+                modifier = Modifier.clickable{
 
                     val intent = Intent(context, MainActivity::class.java)
                     context.startActivity(intent)
