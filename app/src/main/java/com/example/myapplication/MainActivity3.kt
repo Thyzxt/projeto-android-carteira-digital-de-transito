@@ -32,10 +32,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-// =============================================================
-// 📦 DATA CLASSES E ENUM
-// =============================================================
-
 enum class Status {
     VENCIDA,
     A_VENCER,
@@ -58,10 +54,6 @@ class Converters {
     @TypeConverter
     fun toStatus(value: String): Status = Status.valueOf(value)
 }
-
-// =============================================================
-// 🧱 DAO + DATABASE
-// =============================================================
 
 @Dao
 interface InfracaoDao {
@@ -101,10 +93,6 @@ abstract class AppDatabase : RoomDatabase() {
     }
 }
 
-// =============================================================
-// 🧠 VIEWMODEL
-// =============================================================
-
 class InfracaoViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dao = AppDatabase.getDatabase(application).infracaoDao()
@@ -125,7 +113,6 @@ class InfracaoViewModel(application: Application) : AndroidViewModel(application
                 )
                 iniciais.forEach { dao.insert(it) }
 
-                // marca que já adicionou
                 prefs.edit().putBoolean("infracoes_iniciais_inseridas", true).apply()
             }
         }
@@ -147,10 +134,6 @@ class InfracaoViewModel(application: Application) : AndroidViewModel(application
         prefs.edit().remove("infracoes_iniciais_inseridas").apply()
     }
 }
-
-// =============================================================
-// 🖥️ ACTIVITY + UI
-// =============================================================
 
 class InfratorActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

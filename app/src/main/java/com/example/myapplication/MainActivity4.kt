@@ -45,7 +45,6 @@ class VeiculosActivity : ComponentActivity() {
 fun TelaVeiculos() {
     val context = LocalContext.current
 
-    // Estado da lista de veículos
     val veiculos = remember {
         mutableStateListOf(
             Veiculo("HONDA/MOTOCICLETA", "PPD1377", "Sou Proprietário", Color(0xFF388E3C)),
@@ -55,7 +54,6 @@ fun TelaVeiculos() {
         )
     }
 
-    // Controle do diálogo (para adicionar ou editar)
     var showDialog by remember { mutableStateOf(false) }
     var editIndex by remember { mutableStateOf(-1) }
     var modelo by remember { mutableStateOf("") }
@@ -92,7 +90,6 @@ fun TelaVeiculos() {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Botão de adicionar veículo
                 Button(
                     onClick = {
                         modelo = ""
@@ -112,11 +109,9 @@ fun TelaVeiculos() {
             }
         }
 
-        // Arquivos PDF abaixo
         ArquivosExtras()
     }
 
-    // Diálogo para adicionar/editar
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
