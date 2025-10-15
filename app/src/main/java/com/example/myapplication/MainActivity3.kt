@@ -70,53 +70,12 @@ interface InfracaoDao {
     suspend fun update(infracao: InfracaoEntity)
 }
 
-@Database(entities = [InfracaoEntity::class], version = 1)
-@TypeConverters(Converters::class)
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun infracaoDao(): InfracaoDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
-
-        fun getDatabase(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "infracoes_db"
-                ).build()
-                INSTANCE = instance
-                instance
-            }
-        }
-    }
-}
-
 class InfracaoViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dao = AppDatabase.getDatabase(application).infracaoDao()
-    private val prefs = application.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
     val infracoes = dao.getAll()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    fun adicionarIniciais() {
-        viewModelScope.launch {
-            val jaInicializado = prefs.getBoolean("infracoes_iniciais_inseridas", false)
-            if (!jaInicializado) {
-                val iniciais = listOf(
-                    InfracaoEntity(descricao = "AVANÇAR O SINAL VERMELHO DO SEMÁFORO", data = "10/09/2025 - 17:58", valor = 195.23, status = Status.VENCIDA),
-                    InfracaoEntity(descricao = "DIRIGIR SEM CINTO DE SEGURANÇA", data = "23/03/2025 - 14:35", valor = 153.72, status = Status.VENCIDA),
-                    InfracaoEntity(descricao = "USAR CELULAR AO DIRIGIR", data = "27/11/2025 - 13:31", valor = 293.47, status = Status.A_VENCER),
-                    InfracaoEntity(descricao = "DIRIGIR SEM CINTO DE SEGURANÇA", data = "10/07/2023 - 23:52", valor = 293.47, status = Status.PAGA)
-                )
-                iniciais.forEach { dao.insert(it) }
-
-                prefs.edit().putBoolean("infracoes_iniciais_inseridas", true).apply()
-            }
-        }
-    }
 
     fun addInfracao(infracao: InfracaoEntity) = viewModelScope.launch {
         dao.insert(infracao)
@@ -128,10 +87,6 @@ class InfracaoViewModel(application: Application) : AndroidViewModel(application
 
     fun updateInfracao(infracao: InfracaoEntity) = viewModelScope.launch {
         dao.update(infracao)
-    }
-
-    fun resetarBanco() = viewModelScope.launch {
-        prefs.edit().remove("infracoes_iniciais_inseridas").apply()
     }
 }
 
@@ -150,9 +105,8 @@ fun TelaInfrator(viewModel: InfracaoViewModel = viewModel()) {
     val infracoes by viewModel.infracoes.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.adicionarIniciais()
-    }
+    // ❌ Removido o LaunchedEffect que adicionava iniciais
+    // LaunchedEffect(Unit) { viewModel.adicionarIniciais() }
 
     val vencidas = infracoes.filter { it.status == Status.VENCIDA }
     val aVencer = infracoes.filter { it.status == Status.A_VENCER }
@@ -392,7 +346,25 @@ fun InfBotao(texto: String, icone: ImageVector, modifier: Modifier = Modifier) {
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 fun TelaInfratorPreview() {
-    TelaInfrator()
+
+    val mockInfracoes = listOf(
+        InfracaoEntity(descricao = "AVANÇAR O SINAL VERMELHO DO SEMÁFORO", data = "10/09/2025 - 17:58", valor = 195.23, status = Status.VENCIDA),
+        InfracaoEntity(descricao = "DIRIGIR SEM CINTO DE SEGURANÇA", data = "23/03/2025 - 14:35", valor = 153.72, status = Status.VENCIDA),
+        InfracaoEntity(descricao = "USAR CELULAR AO DIRIGIR", data = "27/11/2025 - 13:31", valor = 293.47, status = Status.A_VENCER),
+        InfracaoEntity(descricao = "USAR CELULAR AO DIRIGIR", data = "10/07/2023 - 23:52", valor = 293.47, status = Status.PAGA)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF2F2F2))
+    ) {
+        TopoInfrator(context = LocalContext.current)
+        InfracaoSection("Vencidas", mockInfracoes.filter { it.status == Status.VENCIDA })
+        InfracaoSection("A vencer", mockInfracoes.filter { it.status == Status.A_VENCER })
+        InfracaoSection("Pagas", mockInfracoes.filter { it.status == Status.PAGA })
+    }
 }
+
 
 

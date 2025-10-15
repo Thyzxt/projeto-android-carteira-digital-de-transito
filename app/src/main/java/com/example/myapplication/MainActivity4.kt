@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -17,14 +18,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.room.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
+// -------------------- DATA CLASS PARA COMPOSABLES E PREVIEW --------------------
 data class Veiculo(
     val modelo: String,
     val placa: String,
@@ -32,6 +40,45 @@ data class Veiculo(
     val statusColor: Color
 )
 
+// -------------------- ENTIDADE E ROOM --------------------
+@Entity(tableName = "veiculos")
+data class VeiculoEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val modelo: String,
+    val placa: String,
+    val descricao: String,
+    val statusColor: Long // Salva cor como Long (ARGB)
+)
+
+@Dao
+interface VeiculoDao {
+    @Query("SELECT * FROM veiculos")
+    fun getAll(): kotlinx.coroutines.flow.Flow<List<VeiculoEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(veiculo: VeiculoEntity)
+
+    @Update
+    suspend fun update(veiculo: VeiculoEntity)
+
+    @Delete
+    suspend fun delete(veiculo: VeiculoEntity)
+}
+
+// -------------------- VIEWMODEL --------------------
+class VeiculoViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val dao = AppDatabase.getDatabase(application).veiculoDao()
+
+    val veiculos = dao.getAll()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun addVeiculo(veiculo: VeiculoEntity) = viewModelScope.launch { dao.insert(veiculo) }
+    fun updateVeiculo(veiculo: VeiculoEntity) = viewModelScope.launch { dao.update(veiculo) }
+    fun deleteVeiculo(veiculo: VeiculoEntity) = viewModelScope.launch { dao.delete(veiculo) }
+}
+
+// -------------------- ACTIVITY --------------------
 class VeiculosActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,24 +88,20 @@ class VeiculosActivity : ComponentActivity() {
     }
 }
 
+// -------------------- COMPOSABLES --------------------
 @Composable
-fun TelaVeiculos() {
+fun TelaVeiculos(viewModel: VeiculoViewModel = viewModel()) {
     val context = LocalContext.current
-
-    val veiculos = remember {
-        mutableStateListOf(
-            Veiculo("HONDA/MOTOCICLETA", "PPD1377", "Sou Proprietário", Color(0xFF388E3C)),
-            Veiculo("HONDA/FIT CX FLEX", "OXA7777", "Sou Proprietário", Color(0xFF388E3C)),
-            Veiculo("RENAULT/SANDERO EXP 16", "HIU3333", "Compartilhado comigo", Color(0xFFFFC107)),
-            Veiculo("PEUGEOT/208 GRIFFE A", "SSS5250", "Último licenciamento: 2020", Color(0xFFD32F2F))
-        )
-    }
+    val veiculos by viewModel.veiculos.collectAsState()
 
     var showDialog by remember { mutableStateOf(false) }
-    var editIndex by remember { mutableStateOf(-1) }
+    var editVeiculo by remember { mutableStateOf<VeiculoEntity?>(null) }
+
+    // Campos temporários do diálogo
     var modelo by remember { mutableStateOf("") }
     var placa by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
+    var statusColor by remember { mutableStateOf(Color(0xFF388E3C)) }
 
     Column(
         modifier = Modifier
@@ -75,17 +118,24 @@ fun TelaVeiculos() {
             elevation = CardDefaults.cardElevation(6.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                veiculos.forEachIndexed { index, veiculo ->
+                veiculos.forEach { veiculoEntity ->
+                    val veiculo = Veiculo(
+                        veiculoEntity.modelo,
+                        veiculoEntity.placa,
+                        veiculoEntity.descricao,
+                        Color(veiculoEntity.statusColor)
+                    )
                     VeiculoItem(
                         veiculo = veiculo,
                         onEdit = {
                             modelo = veiculo.modelo
                             placa = veiculo.placa
                             descricao = veiculo.descricao
-                            editIndex = index
+                            statusColor = veiculo.statusColor
+                            editVeiculo = veiculoEntity
                             showDialog = true
                         },
-                        onDelete = { veiculos.removeAt(index) }
+                        onDelete = { viewModel.deleteVeiculo(veiculoEntity) }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -95,7 +145,8 @@ fun TelaVeiculos() {
                         modelo = ""
                         placa = ""
                         descricao = ""
-                        editIndex = -1
+                        statusColor = Color(0xFF388E3C)
+                        editVeiculo = null
                         showDialog = true
                     },
                     modifier = Modifier
@@ -118,22 +169,26 @@ fun TelaVeiculos() {
             confirmButton = {
                 TextButton(onClick = {
                     if (modelo.isNotBlank() && placa.isNotBlank()) {
-                        val novo = Veiculo(modelo, placa, descricao, Color(0xFF388E3C))
-                        if (editIndex >= 0) {
-                            veiculos[editIndex] = novo
+                        val novo = VeiculoEntity(
+                            id = editVeiculo?.id ?: 0,
+                            modelo = modelo,
+                            placa = placa,
+                            descricao = descricao,
+                            statusColor = statusColor.value.toLong()
+                        )
+                        if (editVeiculo != null) {
+                            viewModel.updateVeiculo(novo)
                         } else {
-                            veiculos.add(novo)
+                            viewModel.addVeiculo(novo)
                         }
                         showDialog = false
                     }
-                }) {
-                    Text("Salvar")
-                }
+                }) { Text("Salvar") }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
             },
-            title = { Text(if (editIndex >= 0) "Editar veículo" else "Novo veículo") },
+            title = { Text(if (editVeiculo != null) "Editar veículo" else "Novo veículo") },
             text = {
                 Column {
                     OutlinedTextField(value = modelo, onValueChange = { modelo = it }, label = { Text("Modelo") })
@@ -160,12 +215,10 @@ fun VeiculoItem(veiculo: Veiculo, onEdit: () -> Unit, onDelete: () -> Unit) {
                     .size(45.dp)
                     .padding(end = 8.dp)
             )
-
             Column(modifier = Modifier.weight(1f)) {
                 Text(veiculo.modelo, fontSize = 18.sp, fontWeight = FontWeight.Medium)
                 Text("Placa: ${veiculo.placa}", fontSize = 16.sp, color = Color.DarkGray)
                 Text(veiculo.descricao, fontSize = 16.sp, color = Color.Blue)
-
                 Spacer(modifier = Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
@@ -178,7 +231,6 @@ fun VeiculoItem(veiculo: Veiculo, onEdit: () -> Unit, onDelete: () -> Unit) {
                 }
             }
         }
-
         Column(horizontalAlignment = Alignment.End) {
             Icon(
                 imageVector = Icons.Default.Edit,
@@ -209,7 +261,7 @@ fun ArquivosExtras() {
                 .fillMaxWidth()
                 .height(100.dp)
                 .padding(16.dp),
-            shape = RectangleShape,
+            shape = RoundedCornerShape(0.dp),
             elevation = CardDefaults.cardElevation(6.dp)
         ) {
             Row(
@@ -224,7 +276,6 @@ fun ArquivosExtras() {
                     contentDescription = "Arquivo",
                     modifier = Modifier.size(38.dp)
                 )
-
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -233,7 +284,6 @@ fun ArquivosExtras() {
                     Text(it.first.first, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                     Text(it.first.second, fontSize = 14.sp, color = Color.Gray)
                 }
-
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Fechar",
@@ -271,8 +321,37 @@ fun TopoVeiculos(context: Context) {
     }
 }
 
+// -------------------- PREVIEW --------------------
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 fun TelaVeiculosPreview() {
-    TelaVeiculos()
+    val mockVeiculos = listOf(
+        Veiculo("HONDA/MOTOCICLETA", "PPD1377", "Sou Proprietário", Color(0xFF388E3C)),
+        Veiculo("HONDA/FIT CX FLEX", "OXA7777", "Sou Proprietário", Color(0xFF388E3C)),
+        Veiculo("RENAULT/SANDERO EXP 16", "HIU3333", "Compartilhado comigo", Color(0xFFFFC107)),
+        Veiculo("PEUGEOT/208 GRIFFE A", "SSS5250", "Último licenciamento: 2020", Color(0xFFD32F2F))
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF2F2F2))
+    ) {
+        TopoVeiculos(context = LocalContext.current)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(6.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                mockVeiculos.forEach { veiculo ->
+                    VeiculoItem(veiculo, onEdit = {}, onDelete = {})
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+        ArquivosExtras()
+    }
 }
