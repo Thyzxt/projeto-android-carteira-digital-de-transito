@@ -1,4 +1,11 @@
-package com.example.myapplication
+package com.example.myapplication.data.local
+
+import com.example.myapplication.Converters
+import com.example.myapplication.InfracaoDao
+import com.example.myapplication.InfracaoEntity
+import com.example.myapplication.VeiculoDao
+import com.example.myapplication.VeiculoEntity
+
 
 import android.content.Context
 import androidx.room.*
