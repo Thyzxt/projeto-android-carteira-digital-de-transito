@@ -1,14 +1,10 @@
 package com.example.myapplication.data.local
 
-import com.example.myapplication.Converters
-import com.example.myapplication.InfracaoDao
-import com.example.myapplication.InfracaoEntity
-import com.example.myapplication.VeiculoDao
-import com.example.myapplication.VeiculoEntity
-
-
 import android.content.Context
-import androidx.room.*
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 
 @Database(entities = [InfracaoEntity::class, VeiculoEntity::class], version = 1)
 @TypeConverters(Converters::class)

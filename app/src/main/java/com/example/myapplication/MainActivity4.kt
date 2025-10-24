@@ -32,6 +32,10 @@ import com.example.myapplication.data.local.AppDatabase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.myapplication.data.local.InfracaoEntity
+import com.example.myapplication.data.local.InfracaoDao
+import com.example.myapplication.data.local.Status
+import com.example.myapplication.data.local.VeiculoEntity
 
 // -------------------- DATA CLASS PARA COMPOSABLES E PREVIEW --------------------
 data class Veiculo(
@@ -41,32 +45,6 @@ data class Veiculo(
     val statusColor: Color
 )
 
-// -------------------- ENTIDADE E ROOM --------------------
-@Entity(tableName = "veiculos")
-data class VeiculoEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val modelo: String,
-    val placa: String,
-    val descricao: String,
-    val statusColor: Long // Salva cor como Long (ARGB)
-)
-
-@Dao
-interface VeiculoDao {
-    @Query("SELECT * FROM veiculos")
-    fun getAll(): kotlinx.coroutines.flow.Flow<List<VeiculoEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(veiculo: VeiculoEntity)
-
-    @Update
-    suspend fun update(veiculo: VeiculoEntity)
-
-    @Delete
-    suspend fun delete(veiculo: VeiculoEntity)
-}
-
-// -------------------- VIEWMODEL --------------------
 class VeiculoViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dao = AppDatabase.getDatabase(application).veiculoDao()
@@ -79,7 +57,6 @@ class VeiculoViewModel(application: Application) : AndroidViewModel(application)
     fun deleteVeiculo(veiculo: VeiculoEntity) = viewModelScope.launch { dao.delete(veiculo) }
 }
 
-// -------------------- ACTIVITY --------------------
 class VeiculosActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,7 +66,6 @@ class VeiculosActivity : ComponentActivity() {
     }
 }
 
-// -------------------- COMPOSABLES --------------------
 @Composable
 fun TelaVeiculos(viewModel: VeiculoViewModel = viewModel()) {
     val context = LocalContext.current

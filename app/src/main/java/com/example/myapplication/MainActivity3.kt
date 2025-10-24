@@ -32,44 +32,9 @@ import com.example.myapplication.data.local.AppDatabase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-enum class Status {
-    VENCIDA,
-    A_VENCER,
-    PAGA
-}
-
-@Entity(tableName = "infracoes")
-data class InfracaoEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val descricao: String,
-    val data: String,
-    val valor: Double,
-    val status: Status
-)
-
-class Converters {
-    @TypeConverter
-    fun fromStatus(status: Status): String = status.name
-
-    @TypeConverter
-    fun toStatus(value: String): Status = Status.valueOf(value)
-}
-
-@Dao
-interface InfracaoDao {
-    @Query("SELECT * FROM infracoes")
-    fun getAll(): kotlinx.coroutines.flow.Flow<List<InfracaoEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(infracao: InfracaoEntity)
-
-    @Delete
-    suspend fun delete(infracao: InfracaoEntity)
-
-    @Update
-    suspend fun update(infracao: InfracaoEntity)
-}
+import com.example.myapplication.data.local.InfracaoEntity
+import com.example.myapplication.data.local.InfracaoDao
+import com.example.myapplication.data.local.Status
 
 class InfracaoViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -105,9 +70,6 @@ fun TelaInfrator(viewModel: InfracaoViewModel = viewModel()) {
     val context = LocalContext.current
     val infracoes by viewModel.infracoes.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
-
-    // ❌ Removido o LaunchedEffect que adicionava iniciais
-    // LaunchedEffect(Unit) { viewModel.adicionarIniciais() }
 
     val vencidas = infracoes.filter { it.status == Status.VENCIDA }
     val aVencer = infracoes.filter { it.status == Status.A_VENCER }

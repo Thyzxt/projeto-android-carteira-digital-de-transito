@@ -2,6 +2,7 @@ package com.example.myapplication.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverter
 
 enum class Status {
     VENCIDA,
@@ -18,11 +19,19 @@ data class InfracaoEntity(
     val status: Status
 )
 
+class Converters {
+    @TypeConverter
+    fun fromStatus(status: Status): String = status.name
+
+    @TypeConverter
+    fun toStatus(value: String): Status = Status.valueOf(value)
+}
+
 @Entity(tableName = "veiculos")
 data class VeiculoEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val modelo: String,
     val placa: String,
     val descricao: String,
-    val statusColor: Long // Salva cor como Long (ARGB)
+    val statusColor: Long
 )
